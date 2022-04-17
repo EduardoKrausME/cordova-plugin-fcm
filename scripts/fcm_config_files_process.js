@@ -16,48 +16,23 @@ fs.ensureDirSync = function ( dir ) {
     }
 };
 
-var config = fs.readFileSync ( 'config.xml' ).toString ();
-var name   = getValue ( config, 'name' );
-
-var IOS_DIR     = 'platforms/ios';
-var ANDROID_DIR = 'platforms/android';
-
 var PLATFORM = {
-    IOS     : {
-        dest : [
-            IOS_DIR + '/' + name + '/Resources/GoogleService-Info.plist',
-            IOS_DIR + '/' + name + '/Resources/Resources/GoogleService-Info.plist'
-        ],
-        src  : [
-            'GoogleService-Info.plist',
-            IOS_DIR + '/www/GoogleService-Info.plist',
-            'www/GoogleService-Info.plist'
-        ]
-    },
-    ANDROID : {
-        dest       : [
-            ANDROID_DIR + '/google-services.json'
-        ],
-        src        : [
-            'google-services.json',
-            ANDROID_DIR + '/assets/www/google-services.json',
-            'www/google-services.json'
-        ],
-        stringsXml : ANDROID_DIR + '/app/src/main/res/values/strings.xml'
-    }
+    dest       : [
+        'platforms/android/google-services.json',
+        'platforms/android/app/google-services.json',
+        'platforms/android/app/src/google-services.json'
+    ],
+    src        : [ 'google-services.json' ],
+    stringsXml : 'platforms/android/app/src/main/res/values/strings.xml'
 };
 
-// Copy key files to their platform specific folders
-if ( directoryExists ( IOS_DIR ) ) {
-    copyKey ( PLATFORM.IOS );
-}
-if ( directoryExists ( ANDROID_DIR ) ) {
-    copyKey ( PLATFORM.ANDROID, updateStringsXml )
+if ( directoryExists ( 'platforms/android' ) ) {
+    copyKey ( PLATFORM, updateStringsXml )
 }
 
 function updateStringsXml ( contents ) {
     var json    = JSON.parse ( contents );
-    var strings = fs.readFileSync ( PLATFORM.ANDROID.stringsXml ).toString ();
+    var strings = fs.readFileSync ( PLATFORM.stringsXml ).toString ();
 
     // strip non-default value
     strings = strings.replace ( new RegExp ( '<string name="google_app_id">([^\@<]+?)</string>', 'i' ), '' );
@@ -74,7 +49,7 @@ function updateStringsXml ( contents ) {
     // replace the default value
     strings = strings.replace ( new RegExp ( '<string name="google_api_key">([^<]+?)</string>', 'i' ), '<string name="google_api_key">' + json.client[ 0 ].api_key[ 0 ].current_key + '</string>' );
 
-    fs.writeFileSync ( PLATFORM.ANDROID.stringsXml, strings );
+    fs.writeFileSync ( PLATFORM.stringsXml, strings );
 }
 
 function copyKey ( platform, callback ) {
